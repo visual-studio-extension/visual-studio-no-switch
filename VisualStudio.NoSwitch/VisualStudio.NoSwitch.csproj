@@ -44,9 +44,15 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Core\NoSwitchAdornment.cs" />
-    <Compile Include="Core\NoSwitchAdornmentTextViewCreationListener.cs" />
+    <Compile Include="Classifier\NoSwitchClassifier.cs" />
+    <Compile Include="Classifier\NoSwitchClassifierClassificationDefinition.cs" />
+    <Compile Include="Classifier\NoSwitchClassifierFormat.cs" />
+    <Compile Include="Classifier\NoSwitchClassifierProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Tag\NoSwichTag.cs" />
+    <Compile Include="Tag\NoSwitchTagger.cs" />
+    <Compile Include="Tag\NoSwitchTaggerTypes.cs" />
+    <Compile Include="Tag\NoSwitchTagProvider.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
