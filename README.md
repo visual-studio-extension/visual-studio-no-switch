@@ -1,0 +1,3 @@
+## VisualStudio.NoSwitch
+
+I don't like to switch keyboard layout between Thai and English ...

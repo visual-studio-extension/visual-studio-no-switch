@@ -1,0 +1,8 @@
+build.sh
+packages
+bin
+obj
+.DS_Store
+tools
+*~*
+.vs
