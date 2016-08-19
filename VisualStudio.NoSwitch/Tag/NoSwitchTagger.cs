@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Text.Operations;
+using System.Linq;
 
 namespace VisualStudio.NoSwitch.Tag
 {
@@ -9,11 +11,14 @@ namespace VisualStudio.NoSwitch.Tag
     {
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
 
+        private ITextSearchService2 _searchService;
+
         private ITextBuffer _buffer;
 
-        public NoSwitchTagger(ITextBuffer buffer)
+        public NoSwitchTagger(ITextBuffer buffer, ITextSearchService2 search)
         {
             _buffer = buffer;
+            _searchService = search;
         }
 
         public IEnumerable<ITagSpan<NoSwitchTag>> GetTags(NormalizedSnapshotSpanCollection spans)
@@ -31,12 +36,15 @@ namespace VisualStudio.NoSwitch.Tag
                     {
                         var index = line.IndexOf(token);
                         var tokenSpan = new SnapshotSpan(currentSpan.Snapshot, new Span(location, token.Length));
-                        if (tokenSpan.IntersectsWith(currentSpan))
-                        {
-                            var tag = new NoSwitchTag(NoSwitchTaggerTypes.Start);
-                            var newSpan = new TagSpan<NoSwitchTag>(tokenSpan, tag);
-                            yield return newSpan;
-                        }
+
+                        //var rs = _searchService.FindAllForReplace(currentSpan, "%", "$", FindOptions.MatchCase);
+                        var edit = _buffer.CreateEdit();
+                        edit.Replace(tokenSpan, "$");
+                        edit.Apply();
+
+                        var tag = new NoSwitchTag(NoSwitchTaggerTypes.Start);
+                        var newSpan = new TagSpan<NoSwitchTag>(tokenSpan, tag);
+                        yield return newSpan;
                     }
 
                     location += token.Length + 1;
