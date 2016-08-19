@@ -14,7 +14,11 @@ namespace VisualStudio.NoSwitch.Classifier
 
         IDictionary<NoSwitchTaggerTypes, IClassificationType> _types;
 
-        public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
+        public event EventHandler<SnapshotSpanEventArgs> TagsChanged
+        {
+            add { }
+            remove { }
+        }
 
         public NoSwitchClassifier(ITextBuffer buffer,
                              ITagAggregator<NoSwitchTag> aggregator,
@@ -31,11 +35,11 @@ namespace VisualStudio.NoSwitch.Classifier
         {
             foreach (var tagSpan in _aggregator.GetTags(spans))
             {
-                var span0 = spans[0];
-                var tagSpans = tagSpan.Span.GetSpans(span0.Snapshot);
+                var span = spans[0];
+                var tagSpans = tagSpan.Span.GetSpans(span.Snapshot);
                 var classTag = new ClassificationTag(_types[tagSpan.Tag.Type]);
-                var tp = new TagSpan<ClassificationTag>(span0, classTag);
-                yield return tp;
+                var newTagSpan = new TagSpan<ClassificationTag>(tagSpans[0], classTag);
+                yield return newTagSpan;
             }
         }
     }

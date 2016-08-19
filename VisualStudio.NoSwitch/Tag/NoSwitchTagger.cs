@@ -18,22 +18,28 @@ namespace VisualStudio.NoSwitch.Tag
 
         public IEnumerable<ITagSpan<NoSwitchTag>> GetTags(NormalizedSnapshotSpanCollection spans)
         {
-            foreach (SnapshotSpan curSpan in spans)
+            foreach (SnapshotSpan currentSpan in spans)
             {
-                ITextSnapshotLine containingLine = curSpan.Start.GetContainingLine();
-                int curLoc = containingLine.Start.Position;
-                string[] tokens = containingLine.GetText().ToLower().Split(' ');
+                var containingLine = currentSpan.Start.GetContainingLine();
+                var location = containingLine.Start.Position;
+                var line = containingLine.GetText();
+                var tokens = line.Split(' ');
 
-                foreach (string ookToken in tokens)
+                foreach (string token in tokens)
                 {
-                        var tokenSpan = new SnapshotSpan(curSpan.Snapshot, new Span(curLoc, ookToken.Length));
-                    if (tokenSpan.IntersectsWith(curSpan))
+                    if (token == "%%")
                     {
-                        var x = new NoSwitchTag(NoSwitchTaggerTypes.Start);
-                        var y = new TagSpan<NoSwitchTag>(tokenSpan, x );
-                        yield return y;
+                        var index = line.IndexOf(token);
+                        var tokenSpan = new SnapshotSpan(currentSpan.Snapshot, new Span(location, token.Length));
+                        if (tokenSpan.IntersectsWith(currentSpan))
+                        {
+                            var tag = new NoSwitchTag(NoSwitchTaggerTypes.Start);
+                            var newSpan = new TagSpan<NoSwitchTag>(tokenSpan, tag);
+                            yield return newSpan;
+                        }
                     }
-                    curLoc += ookToken.Length + 1;
+
+                    location += token.Length + 1;
                 }
             }
         }

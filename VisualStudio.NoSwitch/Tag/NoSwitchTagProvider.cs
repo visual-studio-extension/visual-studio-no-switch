@@ -6,7 +6,7 @@ using Microsoft.VisualStudio.Text;
 namespace VisualStudio.NoSwitch.Tag
 {
     [Export(typeof(ITaggerProvider))]
-    [ContentType("code")]
+    [ContentType("text")]
     [TagType(typeof(NoSwitchTag))]
     class NoSwitchTagProvider : ITaggerProvider
     {

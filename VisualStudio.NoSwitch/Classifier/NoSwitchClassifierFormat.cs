@@ -16,8 +16,8 @@ namespace VisualStudio.NoSwitch.Classifier
     /// and is underlined.
     /// </summary>
     [Export(typeof(EditorFormatDefinition))]
-    [ClassificationType(ClassificationTypeNames = "NoSwtichClassifier")]
-    [Name("NoSwtichClassifier")]
+    [ClassificationType(ClassificationTypeNames = "NoSwitchClassifier")]
+    [Name("NoSwitchClassifier")]
     [UserVisible(true)] // This should be visible to the end user
     [Order(Before = Priority.Default)] // Set the priority to be after the default classifiers
     internal sealed class NoSwitchClassifierFormat : ClassificationFormatDefinition
@@ -27,9 +27,10 @@ namespace VisualStudio.NoSwitch.Classifier
         /// </summary>
         public NoSwitchClassifierFormat()
         {
-            this.DisplayName = "NoSwtichClassifier"; // Human readable version of the name
-            this.BackgroundColor = Colors.BlueViolet;
-            this.TextDecorations = System.Windows.TextDecorations.Underline;
+            this.DisplayName = "NoSwitchClassifier"; // Human readable version of the name
+            //this.BackgroundColor = Colors.BlueViolet;
+            //this.TextDecorations = System.Windows.TextDecorations.Underline;
+            this.ForegroundColor = Colors.Pink;
         }
     }
 }
