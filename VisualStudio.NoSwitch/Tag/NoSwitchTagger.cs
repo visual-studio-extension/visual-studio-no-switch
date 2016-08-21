@@ -5,18 +5,49 @@ using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Operations;
 using System.Linq;
 using VisualStudio.NoSwitch.Mapper;
+using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.Shell;
 
 namespace VisualStudio.NoSwitch.Tag
 {
+    public class CakeHelper
+    {
+        static Action<string> Output = OutputWindow();
+
+        static CakeHelper()
+        {
+            var outWindow = Package.GetGlobalService(typeof(SVsOutputWindow)) as IVsOutputWindow;
+            var customGuid = new Guid("1E7A8380-9E06-4A12-A0C7-DBC5EFBB5F23");
+
+            IVsOutputWindowPane outputPane;
+            outWindow.CreatePane(ref customGuid, "NoSwitch", 1, 1);
+            outWindow.GetPane(ref customGuid, out outputPane);
+            outputPane.Activate();
+
+            Output = (message) => outputPane.OutputString(message + Environment.NewLine);
+        }
+
+        public static Action<string> OutputWindow()
+        {
+            return Output;
+        }
+    }
+
     class State
     {
         public bool ActivateThai { set; get; }
         public int StartPosition { set; get; }
+        public void Reset()
+        {
+            ActivateThai = false;
+            StartPosition = 0;
+        }
     }
 
     class NoSwitchTagger : ITagger<NoSwitchTag>
     {
         private State _state = new State();
+        private Action<string> _output = CakeHelper.OutputWindow();
 
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
 
@@ -30,9 +61,9 @@ namespace VisualStudio.NoSwitch.Tag
             _searchService = search;
         }
 
-        private void Release(SnapshotSpan span)
+        //private void Release(SnapshotSpan span)
+        private void Release()
         {
-            //ReplaceWith(span, '~', "");
             _state.ActivateThai = false;
             _state.StartPosition = 0;
         }
@@ -43,12 +74,6 @@ namespace VisualStudio.NoSwitch.Tag
             _state.StartPosition = location;
         }
 
-        private void ReplaceWith(SnapshotSpan span, char replace, string with)
-        {
-            var edit = _buffer.CreateEdit();
-            edit.Replace(_state.StartPosition, replace, with);
-            edit.Apply();
-        }
 
         private void Replace(SnapshotSpan span, string replaceWith)
         {
@@ -60,15 +85,7 @@ namespace VisualStudio.NoSwitch.Tag
 
         public IEnumerable<ITagSpan<NoSwitchTag>> GetTags(NormalizedSnapshotSpanCollection spans)
         {
-            try
-            {
-                return TryGetTags(spans);
-
-            }
-            catch (Exception ex)
-            {
-                return Enumerable.Empty<ITagSpan<NoSwitchTag>>();
-            }
+            return TryGetTags(spans);
         }
 
         public IEnumerable<ITagSpan<NoSwitchTag>> TryGetTags(NormalizedSnapshotSpanCollection spans)
@@ -80,10 +97,13 @@ namespace VisualStudio.NoSwitch.Tag
                 var line = containingLine.GetText();
 
                 var start = line.IndexOf('~');
-                if(start != -1)
+                if (start == -1)
                 {
-                    _state.StartPosition = start + location;
-                    _state.ActivateThai = true;
+                    _state.Reset();
+                }
+                else
+                {
+                    _state.StartPosition = location + start;
                 }
 
                 foreach (var token in line.ToArray())
@@ -91,19 +111,21 @@ namespace VisualStudio.NoSwitch.Tag
                     var activateThai = _state.ActivateThai;
                     var startPosition = _state.StartPosition;
 
+
                     if (token == '~')
                     {
                         if (activateThai)
                         {
                             if (location > startPosition)
                             {
-                                //var span = new SnapshotSpan(currentSpan.Snapshot, new Span(startPosition, location - startPosition));
-                                //Release(span);
+                                _output($"|| release => startPosition = {startPosition} location = {location}");
+                                Release();
                             }
                         }
                         else
                         {
-                            //Start(location);
+                            _output($"|| start => startPosition = {startPosition} location = {location}");
+                            Start(location);
                         }
                     }
                     else
@@ -114,14 +136,24 @@ namespace VisualStudio.NoSwitch.Tag
 
                             if (thai != token)
                             {
+                                _output($"|| replace => startPosition = {startPosition}, location = {location}, replace {token} => {thai}");
                                 var tokenSpan = new SnapshotSpan(currentSpan.Snapshot, new Span(location, 1));
-                                Replace(tokenSpan, thai.ToString());
-
+                                if (tokenSpan.IntersectsWith(currentSpan))
+                                {
+                                    Replace(tokenSpan, thai.ToString());
+                                }
                             }
-                            var startSpan = new SnapshotSpan(currentSpan.Snapshot, new Span(startPosition, location));
-                            var tag = new NoSwitchTag(NoSwitchTaggerTypes.Start);
-                            var newSpan = new TagSpan<NoSwitchTag>(startSpan, tag);
-                            yield return newSpan;
+
+                            _output($"|| more => startPosition = {startPosition} location = {location}");
+
+                            var startSpan = new SnapshotSpan(currentSpan.Snapshot, new Span(startPosition, 1));
+                            if (startSpan.IntersectsWith(currentSpan))
+                            {
+                                var tag = new NoSwitchTag(NoSwitchTaggerTypes.Start);
+                                var newSpan = new TagSpan<NoSwitchTag>(startSpan, tag);
+                                yield return newSpan;
+                            }
+
                         }
                     }
                     location++;
