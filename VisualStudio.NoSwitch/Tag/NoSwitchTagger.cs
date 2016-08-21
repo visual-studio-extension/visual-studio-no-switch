@@ -7,6 +7,9 @@ using System.Linq;
 using VisualStudio.NoSwitch.Mapper;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Shell;
+using EnvDTE80;
+using EnvDTE;
+using Microsoft.VisualStudio.TextManager.Interop;
 
 namespace VisualStudio.NoSwitch.Tag
 {
@@ -49,6 +52,9 @@ namespace VisualStudio.NoSwitch.Tag
         private State _state = new State();
         private Action<string> _output = CakeHelper.OutputWindow();
 
+        private DTE2 _dte = Package.GetGlobalService(typeof(DTE)) as DTE2;
+        private IVsTextManager _textManager = Package.GetGlobalService(typeof(SVsTextManager)) as IVsTextManager;
+
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
 
         private ITextSearchService2 _searchService;
@@ -82,6 +88,20 @@ namespace VisualStudio.NoSwitch.Tag
             edit.Apply();
         }
 
+        public int GetCursorPosition()
+        {
+            IVsTextView textViewCurrent;
+            _textManager.GetActiveView(1, null, out textViewCurrent);
+            var row = 0;
+            var column = 0;
+
+            if (textViewCurrent == null) return 0;
+            else
+            {
+                textViewCurrent.GetCaretPos(out row, out column);
+                return column;
+            }
+        }
 
         public IEnumerable<ITagSpan<NoSwitchTag>> GetTags(NormalizedSnapshotSpanCollection spans)
         {
@@ -95,6 +115,7 @@ namespace VisualStudio.NoSwitch.Tag
                 var containingLine = currentSpan.Start.GetContainingLine();
                 var location = containingLine.Start.Position;
                 var line = containingLine.GetText();
+                var cursor = GetCursorPosition() + location;
 
                 var start = line.IndexOf('~');
                 if (start == -1)
@@ -110,7 +131,6 @@ namespace VisualStudio.NoSwitch.Tag
                 {
                     var activateThai = _state.ActivateThai;
                     var startPosition = _state.StartPosition;
-
 
                     if (token == '~')
                     {
@@ -130,7 +150,7 @@ namespace VisualStudio.NoSwitch.Tag
                     }
                     else
                     {
-                        if (activateThai && location > startPosition)
+                        if (activateThai && location > startPosition && location < cursor)
                         {
                             var thai = KeyboardMap.GetThaiChar(token);
 
@@ -146,7 +166,7 @@ namespace VisualStudio.NoSwitch.Tag
 
                             _output($"|| more => startPosition = {startPosition} location = {location}");
 
-                            var startSpan = new SnapshotSpan(currentSpan.Snapshot, new Span(startPosition, 1));
+                            var startSpan = new SnapshotSpan(currentSpan.Snapshot, new Span(startPosition, location - startPosition));
                             if (startSpan.IntersectsWith(currentSpan))
                             {
                                 var tag = new NoSwitchTag(NoSwitchTaggerTypes.Start);
