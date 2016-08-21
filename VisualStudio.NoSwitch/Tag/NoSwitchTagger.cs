@@ -90,15 +90,15 @@ namespace VisualStudio.NoSwitch.Tag
 
         public int GetCursorPosition()
         {
-            IVsTextView textViewCurrent;
-            _textManager.GetActiveView(1, null, out textViewCurrent);
+            IVsTextView textView;
+            _textManager.GetActiveView(1, null, out textView);
             var row = 0;
             var column = 0;
 
-            if (textViewCurrent == null) return 0;
+            if (textView == null) return 0;
             else
             {
-                textViewCurrent.GetCaretPos(out row, out column);
+                textView.GetCaretPos(out row, out column);
                 return column;
             }
         }
@@ -110,6 +110,8 @@ namespace VisualStudio.NoSwitch.Tag
 
         public IEnumerable<ITagSpan<NoSwitchTag>> TryGetTags(NormalizedSnapshotSpanCollection spans)
         {
+         
+
             foreach (SnapshotSpan currentSpan in spans)
             {
                 var containingLine = currentSpan.Start.GetContainingLine();
@@ -140,6 +142,7 @@ namespace VisualStudio.NoSwitch.Tag
                             {
                                 _output($"|| release => startPosition = {startPosition} location = {location}");
                                 Release();
+                                //yield break;
                             }
                         }
                         else
@@ -177,6 +180,31 @@ namespace VisualStudio.NoSwitch.Tag
                         }
                     }
                     location++;
+                }
+            }
+
+            foreach (SnapshotSpan currentSpan in spans)
+            {
+                if (!_state.ActivateThai)
+                {
+                    var line = currentSpan.Start.GetContainingLine();
+                    var text = line.GetText();
+                    var index = 0;
+
+                    while (index != -1)
+                    {
+                        index = text.IndexOf('~');
+                        var location = line.Start.Position;
+                        if (index != -1)
+                        {
+                            text = text.Remove(index, 1);
+                            var span = new SnapshotSpan(currentSpan.Snapshot, new Span(location + index, 1));
+                            if (span.IntersectsWith(currentSpan))
+                            {
+                                _buffer.Delete(span);
+                            }
+                        }
+                    }
                 }
             }
         }
