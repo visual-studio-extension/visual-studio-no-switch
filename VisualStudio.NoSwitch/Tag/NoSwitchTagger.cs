@@ -27,7 +27,10 @@ namespace VisualStudio.NoSwitch.Tag
             outWindow.GetPane(ref customGuid, out outputPane);
             outputPane.Activate();
 
-            Output = (message) => outputPane.OutputString(message + Environment.NewLine);
+            Output = (message) =>
+            {
+                // outputPane.OutputString(message + Environment.NewLine);
+            };
         }
 
         public static Action<string> OutputWindow()

@@ -21,7 +21,7 @@ Task("Fixie")
         });
         Fixie(testDll);
     });
-    
+
 Action<string,string> build = (proj, target) => {
     MSBuild(proj, new MSBuildSettings {
         Verbosity = Verbosity.Minimal,
@@ -40,7 +40,7 @@ Task("Create-Github-Release")
         var tag = string.Format("v{0}", version);
         var args = string.Format("tag -a {0} -m \"{0}\"", tag);
         var owner = "wk-j";
-        var repo = "jannine-background";
+        var repo = "visual-studio-no-switch";
 
         StartProcess("git", new ProcessSettings {
             Arguments = args
@@ -59,9 +59,6 @@ Task("Create-Github-Release")
         GitReleaseManagerAddAssets(user, pass, owner, repo, tag, package);
         GitReleaseManagerPublish(user, pass, owner , repo, tag);
     });
-
-
-
 
 Task("Reset-Experimental-Instance").Does(() => {
     var bin = @"C:\Program Files (x86)\Microsoft Visual Studio 14.0\VSSDK\VisualStudioIntegration\Tools\Bin\CreateExpInstance.exe";
